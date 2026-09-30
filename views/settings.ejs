@@ -1,12 +1,12 @@
 <%- include('partials/header') %>
 <div class="page-head"><h1>Настройки сбора</h1></div>
 <% if (msg) { %><div class="notice"><%= msg %></div><% } %>
-<% if (error) { %><div class="notice notice-warn">Не сохранено: <%= error %></div><% } %>
+<% if (error) { %><div class="notice notice-warn">Сбор не запущен: <%= error %></div><% } %>
 
 <section class="card">
   <h2>Регулярный сбор</h2>
   <p>Сейчас: <span class="pill <%= cfg.enabled ? 'pill-ok' : 'pill-off' %>"><%= cfg.enabled ? 'включён' : 'выключен' %></span></p>
-  <p class="muted small">Флаг хранится в <code>collector.config.json</code>. Сборщик (Claude через Chrome) читает этот файл перед каждым плановым запуском и ничего не делает, пока флаг выключен. Ручной запуск ("собери вакансии") работает всегда.</p>
+  <p class="muted small">Флаг хранится в <code>collector.config.json</code>. Сборщик (Claude через Chrome) читает этот файл перед каждым плановым запуском и ничего не делает, пока флаг выключен. Ручной запуск ("собери вакансии") работает всегда. Что и где искать, настраивается в <a href="/profile">профиле</a>.</p>
   <form method="post" action="/settings/toggle">
     <input type="hidden" name="enabled" value="<%= cfg.enabled ? 'false' : 'true' %>">
     <button class="btn <%= cfg.enabled ? 'btn-ghost' : '' %>"><%= cfg.enabled ? 'Выключить' : 'Включить' %></button>
@@ -14,14 +14,47 @@
 </section>
 
 <section class="card">
-  <h2>Параметры</h2>
-  <p class="muted small">Запросы, целевые регионы, порог зарплаты (<b>$<%= cfg.salary.min_net_usd_month %></b> net/мес), курсы валют и доля net от gross по странам. Курсы и налоги примерные, их стоит время от времени обновлять.</p>
-  <form method="post" action="/settings" class="stack-form">
-    <textarea name="json" rows="28" class="code" spellcheck="false"><%= json %></textarea>
-    <button class="btn">Сохранить</button>
+  <h2>Ручной сбор</h2>
+  <% if (running) { %>
+  <p class="muted">Сбор идёт, прогресс в плашке сверху. Новые вакансии импортируются сами.</p>
+  <% } else { %>
+  <% if (problems.length) { %>
+  <div class="notice notice-warn">Сбор не запустится, пока не исправишь в <a href="/profile">профиле</a>:
+    <ul><% problems.forEach((p) => { %><li><%= p %></li><% }) %></ul>
+  </div>
+  <% } %>
+  <form method="post" action="/settings/run" class="btn-row" data-confirm="Claude откроет вкладки в Chrome и соберёт вакансии с отмеченных площадок. Запустить?">
+    <% (cfg.sources || []).forEach((s) => { %>
+    <label class="check"><input type="checkbox" name="sources" value="<%= s %>" checked> <%= fmt.labels.source[s] || s %></label>
+    <% }) %>
+    <button class="btn" <%= problems.length ? 'disabled' : '' %>>Собрать сейчас</button>
   </form>
-  <p class="muted small">Изменения порога и курсов применяются к новым импортам. Чтобы пересчитать уже сохранённые вакансии, нажми кнопку ниже.</p>
-  <form method="post" action="/settings/recalc"><button class="btn btn-ghost">Пересчитать зарплаты</button></form>
+  <p class="muted small">Запускает <code>claude -p --chrome</code> по <code>docs/COLLECTOR.md</code>. Chrome должен быть открыт с расширением Claude in Chrome. Если площадка попросит войти или покажет капчу, сбор остановится: войди вручную и запусти снова. Флаг регулярного сбора на ручной запуск не влияет.</p>
+  <% } %>
+  <% if (collectorRuns.length) { const n = (v) => (v == null ? '' : v.toLocaleString('ru-RU')); %>
+  <div class="table-wrap">
+  <table class="table">
+    <thead><tr><th>Запуск</th><th>Площадки</th><th class="num">Мин.</th><th>Итог</th><th class="num">Вход</th><th class="num">Кэш: чтение</th><th class="num">Кэш: запись</th><th class="num">Выход</th><th class="num">Всего токенов</th><th class="num">$</th></tr></thead>
+    <tbody>
+    <% collectorRuns.forEach((r) => { const total = r.input_tokens == null ? null : r.input_tokens + r.output_tokens + r.cache_read_tokens + r.cache_write_tokens; %>
+      <tr>
+        <td><%= fmt.dateTime(r.started_at) %></td>
+        <td class="small"><%= (r.sources || []).map((s) => fmt.labels.source[s] || s).join(', ') %></td>
+        <td class="num"><%= Math.round((new Date(r.finished_at) - new Date(r.started_at)) / 60000) %></td>
+        <td>
+          <% if (r.error) { %><span class="danger">ошибка<%= r.exit_code != null ? ', код ' + r.exit_code : '' %></span><% } else { %>готово<% } %>
+          <% if (r.result || r.error) { %><details><summary class="small">отчёт</summary><div class="result"><%= r.error ? r.error + '\n\n' : '' %><%= r.result || '' %></div></details><% } %>
+        </td>
+        <td class="num"><%= n(r.input_tokens) %></td><td class="num"><%= n(r.cache_read_tokens) %></td><td class="num"><%= n(r.cache_write_tokens) %></td>
+        <td class="num"><%= n(r.output_tokens) %></td><td class="num"><b><%= n(total) %></b></td>
+        <td class="num"><%= r.cost_usd == null ? '' : r.cost_usd.toFixed(2) %></td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table>
+  </div>
+  <p class="muted small">Токены и стоимость берутся из ответа <code>claude -p --output-format json</code> и суммируются по всем моделям за запуск. Стоимость посчитана по ценам API: по подписке столько не списывают, но по ней видно, какие запуски тяжелее.</p>
+  <% } %>
 </section>
 
 <section class="card">

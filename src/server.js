@@ -7,6 +7,7 @@ import { router as adminRouter } from './routes/admin.js';
 import { router as vacancyRouter } from './routes/vacancies.js';
 import { router as applicationRouter } from './routes/applications.js';
 import * as fmt from './format.js';
+import { runStatus } from './collector.js';
 
 const app = express();
 app.set('view engine', 'ejs');
@@ -15,7 +16,7 @@ app.locals.fmt = fmt;
 
 app.use(express.static(path.join(ROOT, 'public')));
 app.use(express.urlencoded({ extended: false, limit: '5mb' }));
-app.use((req, res, next) => { res.locals.path = req.path; next(); });
+app.use((req, res, next) => { res.locals.path = req.path; res.locals.running = runStatus(); next(); });
 
 // Express 4 does not catch rejected promises from async handlers
 const wrap = (router) => {
@@ -39,7 +40,7 @@ app.use((err, req, res, next) => {
 });
 
 await migrate();
-app.listen(env.port, () => console.log(`job-tracker: http://localhost:${env.port}`));
+app.listen(env.port, '127.0.0.1', () => console.log(`job-tracker: http://localhost:${env.port}`));
 
 // Picks up files the collector drops into data/inbox
 const tick = () => processInbox().catch((e) => console.error('inbox:', e.message));

@@ -1,0 +1,121 @@
+<%- include('partials/header') %>
+<%
+const COUNTRIES = [['EU', 'Евросоюз'], ['GB', 'Великобритания'], ['CH', 'Швейцария'], ['AE', 'ОАЭ'], ['US', 'США'], ['CA', 'Канада']];
+const CITIES = [['Almaty', 'Алматы'], ['Astana', 'Астана'], ['Shymkent', 'Шымкент'], ['Karaganda', 'Караганда'], ['Aktobe', 'Актобе'], ['Atyrau', 'Атырау'], ['Pavlodar', 'Павлодар'], ['Ust-Kamenogorsk', 'Усть-Каменогорск']];
+const withCurrent = (opts, cur) => (cur == null || opts.some(([v]) => v === cur) ? opts : [...opts, [cur, String(cur)]]);
+const nums = (values, cur, unit) => [...new Set([...values, cur])].filter((n) => n != null).sort((a, b) => a - b).map((n) => [n, `${n} ${unit}`]);
+const t = cfg.targets || {};
+const kz = t.kazakhstan;
+const countries = (t.relocation_countries || []).reduce((opts, c) => withCurrent(opts, c), COUNTRIES);
+const on = (flag) => (flag ? 'checked' : '');
+const sel = (a, b) => (a === b ? 'selected' : '');
+%>
+<div class="page-head"><h1>Профиль</h1></div>
+<% if (cfg.onboarded === false) { %><div class="notice">Первый запуск. Ответь на вопросы ниже: по ним сборщик будет искать вакансии. Всё можно поменять позже.</div><% } %>
+<% if (msg) { %><div class="notice"><%= msg %></div><% } %>
+<% if (error) { %><div class="notice notice-warn">Не сохранено: <%= error %></div><% } %>
+
+<section class="card">
+  <h2>Мастер-CV</h2>
+  <% if (cv) { %>
+  <p>Загружено <%= fmt.date(cv.mtime) %> · <a href="/cv/master.pdf" target="_blank">открыть PDF</a></p>
+  <% } else { %><p class="muted">Ещё не загружено.</p><% } %>
+  <p class="muted small">Лежит в <code>data/cv/master.pdf</code>, по нему сборщик считает match score. Новая загрузка заменяет старый файл.</p>
+  <form data-upload="/profile/cv" class="btn-row">
+    <input type="file" name="file" accept="application/pdf" required>
+    <button class="btn"><%= cv ? 'Заменить' : 'Загрузить' %></button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Что ищем</h2>
+  <form method="post" action="/profile" class="quiz">
+    <fieldset>
+      <legend>1. На каких площадках искать?</legend>
+      <div class="options">
+        <% Object.entries(fmt.labels.source).forEach(([v, l]) => { %>
+        <label class="check"><input type="checkbox" name="sources" value="<%= v %>" <%= on((cfg.sources || []).includes(v)) %>> <%= l %><%= v === 'hh' ? ' (только для Казахстана)' : '' %></label>
+        <% }) %>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>2. Какие должности?</legend>
+      <textarea name="queries" rows="4" required placeholder="Senior Backend Engineer&#10;Senior Java Developer"><%= (cfg.queries || []).join('\n') %></textarea>
+      <p class="muted small">По одному запросу в строке, по каждому идёт отдельный поиск.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>3. Где готов работать?</legend>
+      <div class="options">
+        <label class="check"><input type="checkbox" name="remote" value="1" <%= on(t.remote) %>> Удалёнка из любой страны</label>
+      </div>
+      <p class="muted small">Релокация:</p>
+      <div class="options">
+        <% countries.forEach(([v, l]) => { %>
+        <label class="check"><input type="checkbox" name="relocation_countries" value="<%= v %>" <%= on((t.relocation_countries || []).includes(v)) %>> <%= l %></label>
+        <% }) %>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>4. Казахстан</legend>
+      <div class="options">
+        <label class="check"><input type="checkbox" name="kz" value="1" <%= on(kz) %>> Искать в казахстанских компаниях</label>
+      </div>
+      <label>Удалёнка из города
+        <select name="kz_city">
+          <% withCurrent(CITIES, kz?.remote_from).forEach(([v, l]) => { %>
+          <option value="<%= v %>" <%= sel(v, kz?.remote_from || 'Almaty') %>><%= l %></option>
+          <% }) %>
+        </select>
+      </label>
+      <div class="options">
+        <label class="check"><input type="checkbox" name="kz_hybrid" value="1" <%= on(kz ? kz.hybrid : true) %>> Гибрид в любом городе Казахстана</label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>5. Сколько хочешь получать?</legend>
+      <label>Минимум, $ на руки в месяц
+        <input type="number" name="min_net_usd_month" min="0" step="100" required value="<%= cfg.salary.min_net_usd_month %>">
+      </label>
+      <p class="muted small">Вакансии с вилкой ниже порога помечаются как неподходящие. Старые вакансии пересчитаются при сохранении.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>6. Объём и сроки</legend>
+      <div class="options">
+        <label>Вакансии не старше
+          <select name="max_age_days">
+            <% nums([1, 3, 7, 14, 30], cfg.max_age_days, 'дн.').forEach(([v, l]) => { %><option value="<%= v %>" <%= sel(v, cfg.max_age_days) %>><%= l %></option><% }) %>
+          </select>
+        </label>
+        <label>Максимум с площадки за запуск
+          <select name="max_vacancies_per_source">
+            <% nums([10, 20, 30, 50, 100], cfg.max_vacancies_per_source, 'шт.').forEach(([v, l]) => { %><option value="<%= v %>" <%= sel(v, cfg.max_vacancies_per_source) %>><%= l %></option><% }) %>
+          </select>
+        </label>
+        <label>Считать отклик без ответа через
+          <select name="ghosted_after_days">
+            <% nums([7, 14, 21, 30, 45], cfg.ghosted_after_days, 'дн.').forEach(([v, l]) => { %><option value="<%= v %>" <%= sel(v, cfg.ghosted_after_days) %>><%= l %></option><% }) %>
+          </select>
+        </label>
+      </div>
+    </fieldset>
+
+    <button class="btn">Сохранить</button>
+  </form>
+</section>
+
+<section class="card">
+  <details <%= jsonOpen ? 'open' : '' %>>
+    <summary><b>Курсы валют, налоги и остальное (JSON)</b></summary>
+    <p class="muted small">Курсы к доллару, доля net от gross по странам и всё, чего нет в форме выше. Курсы и налоги примерные, их стоит время от времени обновлять. После сохранения зарплаты пересчитаются.</p>
+    <form method="post" action="/profile/json" class="stack-form">
+      <textarea name="json" rows="28" class="code" spellcheck="false"><%= json %></textarea>
+      <button class="btn">Сохранить JSON</button>
+    </form>
+  </details>
+</section>
+<%- include('partials/footer') %>

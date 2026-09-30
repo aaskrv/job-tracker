@@ -8,7 +8,8 @@ export const DATA_DIR = path.join(ROOT, 'data');
 export const INBOX_DIR = path.join(DATA_DIR, 'inbox');
 export const IMPORTED_DIR = path.join(DATA_DIR, 'imported');
 export const FAILED_DIR = path.join(DATA_DIR, 'failed');
-const COLLECTOR_CONFIG = path.join(ROOT, 'collector.config.json');
+export const CV_DIR = path.join(DATA_DIR, 'cv');
+export const MASTER_CV = path.join(CV_DIR, 'master.pdf');const COLLECTOR_CONFIG = path.join(ROOT, 'collector.config.json');
 
 export const env = {
   databaseUrl: process.env.DATABASE_URL || 'postgres://jobtracker:jobtracker@localhost:5433/jobtracker',
@@ -16,7 +17,7 @@ export const env = {
   inboxPollSeconds: Number(process.env.INBOX_POLL_SECONDS || 60),
 };
 
-for (const dir of [INBOX_DIR, IMPORTED_DIR, FAILED_DIR]) fs.mkdirSync(dir, { recursive: true });
+for (const dir of [INBOX_DIR, IMPORTED_DIR, FAILED_DIR, CV_DIR]) fs.mkdirSync(dir, { recursive: true });
 if (!fs.existsSync(COLLECTOR_CONFIG)) fs.copyFileSync(path.join(ROOT, 'collector.config.example.json'), COLLECTOR_CONFIG);
 
 // collector.config.json is shared between the app and the collector (Claude in Chrome):
