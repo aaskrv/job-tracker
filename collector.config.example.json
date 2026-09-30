@@ -1,9 +1,9 @@
 {
   "enabled": false,
-  "schedule": "daily",
   "sources": [
     "linkedin",
-    "indeed"
+    "indeed",
+    "hh"
   ],
   "queries": [
     "Senior Backend Engineer"

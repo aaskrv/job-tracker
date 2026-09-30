@@ -12,7 +12,7 @@
 
 ## Поиск
 
-- Площадки: `sources` (linkedin, indeed).
+- Площадки: `sources` (linkedin, indeed, hh). hh только для цели Казахстан.
 - Запросы: `queries`, по каждому отдельный поиск.
 - Регионы: удалёнка (`targets.remote`) и страны релокации (`targets.relocation_countries`: EU, AE).
 - Казахстан (`targets.kazakhstan`): казахстанские компании с удалёнкой, на которой можно работать из `remote_from`,
@@ -26,7 +26,7 @@
 По каждой вакансии открыть полное описание и заполнить поля из README ("Формат файла сборщика").
 Важные поля, которые легко пропустить:
 
-- `external_id`: ID из URL (LinkedIn `/jobs/view/<id>`, Indeed `jk=<id>`).
+- `external_id`: ID из URL (LinkedIn `/jobs/view/<id>`, Indeed `jk=<id>`, hh `/vacancy/<id>`).
 - `remote_region` и `open_to_kz`: "Remote (EU only)", "must reside in", "work authorization" означают `open_to_kz: "no"`;
   "worldwide", "anywhere", явная поддержка релокации означают `yes`; иначе `unknown`.
 - `relocation`, `visa_sponsorship`: `true`, только если это прямо написано; `false`, если прямо исключено; иначе `null`.
@@ -39,6 +39,15 @@
 - Для ЕС работает `geoId=91000000` (European Union) + `f_WT=2` (remote). Для ОАЭ использовать `location=United%20Arab%20Emirates`, geoId там подставляет EMEA.
 - Для Казахстана: `location=Kazakhstan` + `f_WT=2,3` (remote и hybrid).
 - Вакансии с пометкой Emiratisation только для граждан ОАЭ, их пропускать.
+
+## Особенности hh.kz
+
+- Поиск открыт без входа: `https://hh.kz/search/vacancy?text=<запрос>&area=40&work_format=REMOTE&work_format=HYBRID&search_period=<max_age_days>`
+  (`area=40` весь Казахстан). hh.kz может перебросить на город (`astana.hh.kz`), это нормально.
+- API hh (`api.hh.ru`) без токена приложения отвечает 403, его не использовать.
+- `remote_type` брать из блока "Формат работы" в вакансии. Если там только "на месте работодателя", пропускать.
+- Зарплата: "на руки" означает `type: "net"`, "до вычета налогов" означает `gross`. Валюта обычно KZT.
+- Английские запросы из `queries` находят не всё: дополнительно искать "Java разработчик" и "Kotlin разработчик".
 
 ## Оценка соответствия (match_score 0-100)
 
