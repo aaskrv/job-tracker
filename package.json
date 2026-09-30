@@ -9,7 +9,6 @@
     "db:up": "docker compose up -d db",
     "db:down": "docker compose down",
     "migrate": "node src/migrate.js",
-    "import": "node src/cli-import.js",
     "start": "node src/server.js",
     "dev": "node --watch src/server.js"
   },

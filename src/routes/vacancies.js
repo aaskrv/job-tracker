@@ -37,7 +37,7 @@ router.get('/vacancies', async (req, res) => {
   if (f.country) add('v.location_country = ?', f.country.toUpperCase());
   if (f.fit) add('v.salary_fit = ?', f.fit);
   if (f.status) add('v.status = ?', f.status);
-  else where.push(`v.status NOT IN ('skipped','closed')`);
+  else where.push(`v.status NOT IN ('skipped','closed','applied_before')`);
   if (f.kz) add('v.open_to_kz = ?', f.kz);
   if (f.min_score) add('v.match_score >= ?', Number(f.min_score));
   if (f.applied === 'yes') where.push('a.id IS NOT NULL');
@@ -56,7 +56,7 @@ router.get('/vacancies', async (req, res) => {
                   v.remote_type, v.remote_region, v.relocation, v.visa_sponsorship, v.open_to_kz,
                   v.salary_net_usd_min, v.salary_net_usd_max, v.salary_fit, v.salary_min, v.salary_max, v.salary_currency, v.salary_period,
                   v.match_score, v.status, v.stack, v.posted_at, v.first_seen_at, v.duplicate_of,
-                  a.id AS application_id, et.label AS stage_label, s.is_closed
+                  a.id AS application_id, et.label AS stage_label, s.is_closed, s.last_event
            ${base} ORDER BY ${SORTS[f.sort]} LIMIT ${PAGE_SIZE} OFFSET ${(page - 1) * PAGE_SIZE}`, params),
     query(`SELECT COUNT(*) AS n ${base}`, params),
     query(`SELECT DISTINCT source FROM vacancies ORDER BY 1`),
@@ -121,7 +121,9 @@ router.post('/vacancies/:id/apply', async (req, res) => {
   res.redirect(`/vacancies/${id}?msg=applied`);
 });
 
-router.post('/vacancies/:id/delete', async (req, res) => {
-  await query('DELETE FROM vacancies WHERE id = $1', [Number(req.params.id)]);
-  res.redirect('/vacancies');
+router.post('/vacancies/:id/status', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!['skipped', 'applied_before'].includes(req.body.status)) return res.status(400).render('error', { title: 'Ошибка', message: 'Неизвестный статус' });
+  await query('UPDATE vacancies SET status = $2, updated_at = now() WHERE id = $1', [id, req.body.status]);
+  res.redirect(`/vacancies/${id}?msg=saved`);
 });

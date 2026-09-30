@@ -1,8 +1,6 @@
 import express from 'express';
 import { query } from '../db.js';
 import { readCollectorConfig, writeCollectorConfig } from '../config.js';
-import { importPayload } from '../importer.js';
-import { listInbox, processInbox } from '../inbox.js';
 import { dashboardStats, pct } from '../stats.js';
 import { normalizeSalary } from '../normalize.js';
 
@@ -13,30 +11,11 @@ router.get('/', async (req, res) => {
   res.render('dashboard', { title: 'Дашборд', s: stats, pct, collector: readCollectorConfig() });
 });
 
-router.get('/import', async (req, res) => {
-  const { rows: runs } = await query('SELECT * FROM scrape_runs ORDER BY imported_at DESC LIMIT 50');
-  res.render('import', { title: 'Импорт', runs, inbox: listInbox(), msg: req.query.msg });
-});
+const recentRuns = async () => (await query('SELECT * FROM scrape_runs ORDER BY imported_at DESC LIMIT 50')).rows;
 
-// Called from the browser with the parsed JSON file as the body
-router.post('/import', express.json({ limit: '50mb' }), async (req, res) => {
-  try {
-    const stats = await importPayload(req.body, { fileName: decodeURIComponent(req.get('X-File-Name') || 'upload.json') });
-    res.json({ ok: true, stats });
-  } catch (e) {
-    res.status(400).json({ ok: false, error: e.message });
-  }
-});
-
-router.post('/import/inbox', async (req, res) => {
-  const results = await processInbox();
-  const ok = results.filter((r) => r.ok).length;
-  res.redirect(`/import?msg=${encodeURIComponent(`Обработано файлов: ${ok} из ${results.length}`)}`);
-});
-
-router.get('/settings', (req, res) => {
+router.get('/settings', async (req, res) => {
   const cfg = readCollectorConfig();
-  res.render('settings', { title: 'Настройки сбора', cfg, json: JSON.stringify(cfg, null, 2), msg: req.query.msg, error: null });
+  res.render('settings', { title: 'Настройки сбора', cfg, json: JSON.stringify(cfg, null, 2), runs: await recentRuns(), msg: req.query.msg, error: null });
 });
 
 router.post('/settings/toggle', (req, res) => {
@@ -46,7 +25,7 @@ router.post('/settings/toggle', (req, res) => {
   res.redirect('/settings?msg=' + encodeURIComponent(cfg.enabled ? 'Регулярный сбор включён' : 'Регулярный сбор выключен'));
 });
 
-router.post('/settings', (req, res) => {
+router.post('/settings', async (req, res) => {
   try {
     const cfg = JSON.parse(req.body.json);
     if (typeof cfg.enabled !== 'boolean') throw new Error('"enabled" must be true or false');
@@ -55,7 +34,7 @@ router.post('/settings', (req, res) => {
     res.redirect('/settings?msg=' + encodeURIComponent('Сохранено'));
   } catch (e) {
     const cfg = readCollectorConfig();
-    res.status(400).render('settings', { title: 'Настройки сбора', cfg, json: req.body.json, msg: null, error: e.message });
+    res.status(400).render('settings', { title: 'Настройки сбора', cfg, json: req.body.json, runs: await recentRuns(), msg: null, error: e.message });
   }
 });
 

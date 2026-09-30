@@ -19,13 +19,6 @@ npm start            # миграции применяются автомати�
 
 Для разработки: `npm run dev` (перезапуск при изменении файлов).
 
-Проверить на тестовых данных (вымышленные компании с пометкой SAMPLE):
-
-```bash
-npm run import -- samples/sample-import.json
-npm run import -- samples/sample-import-indeed.json   # первая вакансия станет дублем
-```
-
 Удалить всё и начать с чистой базы: `docker compose down -v && npm run db:up`.
 
 ## Страницы
@@ -36,10 +29,9 @@ npm run import -- samples/sample-import-indeed.json   # первая вакан�
 | `/vacancies` | Список с фильтрами: источник, формат, страна, зарплата vs порог, открыто ли для KZ, есть ли отклик, score |
 | `/vacancies/:id` | Карточка: описание, почему такой score, отклик и таймлайн этапов, ручные правки |
 | `/applications` | Отклики: в процессе, без ответа дольше N дней, закрытые; быстрое добавление события |
-| `/import` | Загрузка JSON вручную, содержимое inbox, история сборов |
-| `/settings` | Флаг регулярного сбора и параметры (`collector.config.json`), пересчёт зарплат |
+| `/settings` | Флаг регулярного сбора, параметры (`collector.config.json`), пересчёт зарплат, история сборов |
 
-JSON API: `GET /api/stats`, `GET /api/collector-config`, `POST /import` (тело: payload ниже).
+JSON API: `GET /api/stats`, `GET /api/collector-config`.
 
 ## Этапы отклика
 
@@ -70,7 +62,7 @@ JSON API: `GET /api/stats`, `GET /api/collector-config`, `POST /import` (тел�
 - Та же вакансия на другой площадке: совпадение нормализованных компании и названия в пределах 60 дней,
   новая запись помечается `duplicate_of` и по умолчанию скрыта из списка.
 
-## Формат файла для импорта
+## Формат файла сборщика
 
 ```json
 {

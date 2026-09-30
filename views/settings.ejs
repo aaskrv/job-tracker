@@ -23,4 +23,26 @@
   <p class="muted small">Изменения порога и курсов применяются к новым импортам. Чтобы пересчитать уже сохранённые вакансии, нажми кнопку ниже.</p>
   <form method="post" action="/settings/recalc"><button class="btn btn-ghost">Пересчитать зарплаты</button></form>
 </section>
+
+<section class="card">
+  <h2>История сборов</h2>
+  <% if (!runs.length) { %><p class="muted">Пока пусто.</p><% } else { %>
+  <div class="table-wrap">
+  <table class="table">
+    <thead><tr><th>#</th><th>Импорт</th><th>Источник</th><th>Файл</th><th>Запрос</th><th class="num">Найдено</th><th class="num">Новых</th><th class="num">Обновл.</th><th class="num">Дублей</th><th class="num">Ошибок</th></tr></thead>
+    <tbody>
+    <% runs.forEach(r => { %>
+      <tr>
+        <td><%= r.id %></td><td><%= fmt.date(r.imported_at) %></td><td><%= r.source %></td>
+        <td class="small"><%= r.file_name || '' %></td>
+        <td class="small"><%= r.query ? (r.query.keywords || r.query.q || JSON.stringify(r.query)) : '' %></td>
+        <td class="num"><%= r.found %></td><td class="num"><%= r.inserted %></td><td class="num"><%= r.updated %></td>
+        <td class="num"><%= r.duplicates %></td><td class="num <%= r.errors ? 'danger' : '' %>" title="<%= r.notes || '' %>"><%= r.errors %></td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table>
+  </div>
+  <% } %>
+</section>
 <%- include('partials/footer') %>

@@ -36,7 +36,7 @@ export function rawSalary(v) {
 export const labels = {
   remote: { remote: 'Удалённо', hybrid: 'Гибрид', onsite: 'Офис', unknown: '?' },
   fit: { yes: 'подходит', maybe: 'на грани', no: 'ниже', unknown: 'не указана' },
-  status: { new: 'Новая', shortlisted: 'Интересна', skipped: 'Пропущена', closed: 'Закрыта' },
+  status: { new: 'Новая', shortlisted: 'Интересна', skipped: 'Отказался', closed: 'Закрыта', applied_before: 'Уже подавал' },
   tri: { yes: 'да', no: 'нет', unknown: '?' },
 };
 

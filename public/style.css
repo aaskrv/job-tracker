@@ -104,6 +104,7 @@ form.inline { display: inline; }
 .btn:hover { filter: brightness(1.08); text-decoration: none; }
 .btn-ghost { background: transparent; color: var(--accent); }
 .btn-sm { padding: 3px 9px; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .link-btn { background: none; border: 0; padding: 0; color: var(--muted); cursor: pointer; font: inherit; }
 .link-btn.danger { color: var(--bad); }
 
@@ -131,6 +132,7 @@ form.inline { display: inline; }
 .tag { font-size: 11px; padding: 1px 6px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); }
 .stage { font-weight: 600; font-size: 12px; color: var(--accent); }
 .stage-closed { color: var(--muted); }
+.stage-rejected { color: var(--bad); }
 .status { font-size: 12px; color: var(--muted); }
 .status-shortlisted { color: var(--accent); font-weight: 600; }
 

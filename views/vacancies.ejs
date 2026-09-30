@@ -31,7 +31,7 @@
 </form>
 
 <% if (!rows.length) { %>
-  <p class="muted">Ничего не найдено. Вакансии появятся после <a href="/import">импорта</a>.</p>
+  <p class="muted">Ничего не найдено. Вакансии появятся после первого сбора.</p>
 <% } else { %>
 <div class="table-wrap">
 <table class="table vacancies">
@@ -62,7 +62,7 @@
         <% } else { %><span class="muted">не указана</span><% } %>
       </td>
       <td>
-        <% if (v.application_id) { %><span class="stage <%= v.is_closed ? 'stage-closed' : '' %>"><%= v.stage_label %></span>
+        <% if (v.application_id) { %><span class="stage <%= v.last_event === 'rejected' ? 'stage-rejected' : v.is_closed ? 'stage-closed' : '' %>"><%= v.stage_label %></span>
         <% } else { %><span class="status status-<%= v.status %>"><%= fmt.labels.status[v.status] %></span><% } %>
       </td>
       <td class="small"><%= fmt.daysAgo(v.first_seen_at) %></td>
