@@ -4,4 +4,5 @@ collector.config.json
 data/inbox/*
 data/imported/*
 data/failed/*
+data/cv/*
 !data/**/.gitkeep

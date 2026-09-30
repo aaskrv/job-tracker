@@ -5,6 +5,11 @@ export function date(d) {
   return new Date(d).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
+export function dateTime(d) {
+  if (!d) return '';
+  return new Date(d).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
 export function dateInput(d) {
   const x = d ? new Date(d) : new Date();
   return new Date(x.getTime() - x.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
@@ -38,6 +43,7 @@ export const labels = {
   fit: { yes: 'подходит', maybe: 'на грани', no: 'ниже', unknown: 'не указана' },
   status: { new: 'Новая', shortlisted: 'Интересна', skipped: 'Отказался', closed: 'Закрыта', applied_before: 'Уже подавал' },
   tri: { yes: 'да', no: 'нет', unknown: '?' },
+  source: { linkedin: 'LinkedIn', indeed: 'Indeed', hh: 'hh.kz' },
 };
 
 export function bool(v) {

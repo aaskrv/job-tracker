@@ -13,7 +13,16 @@
     <a href="/" class="<%= path === '/' ? 'active' : '' %>">Дашборд</a>
     <a href="/vacancies" class="<%= path.startsWith('/vacancies') ? 'active' : '' %>">Вакансии</a>
     <a href="/applications" class="<%= path.startsWith('/applications') ? 'active' : '' %>">Отклики</a>
+    <a href="/profile" class="<%= path.startsWith('/profile') ? 'active' : '' %>">Профиль</a>
     <a href="/settings" class="<%= path.startsWith('/settings') ? 'active' : '' %>">Настройки</a>
   </nav>
 </header>
+<% if (running) { %>
+<div id="run-banner" class="run-banner" role="status">
+  <div><span class="spinner"></span> <b>Идёт сбор вакансий</b> (<%= running.sources.map((s) => fmt.labels.source[s] || s).join(', ') %>) · <span data-elapsed></span><span data-expected></span></div>
+  <div class="small" data-action><%= running.lastAction || 'Запускается…' %></div>
+  <div class="small muted">Шагов: <span data-steps><%= running.steps %></span> · открыто вакансий: <span data-vacancies><%= running.vacancies %></span> · токенов: <span data-tokens><%= running.tokens.toLocaleString('ru-RU') %></span> · сбор идёт в фоне, страницу можно закрыть</div>
+  <div class="small" data-stall hidden>Больше 3 минут нет активности. Возможно, площадка просит войти или показывает капчу: загляни в Chrome.</div>
+</div>
+<% } %>
 <main>

@@ -31,16 +31,22 @@ collector (Claude) -> data/inbox/*.json -> inbox.js (раз в INBOX_POLL_SECOND
 - [src/normalize.js](src/normalize.js): страна в ISO-2, нормализация названий, зарплата в net USD/месяц и `salary_fit`.
 - [src/stats.js](src/stats.js): дашборд и воронка. Воронка идёт по view `application_state` (самый дальний этап,
   `rejected`/`withdrawn` не двигают воронку).
-- [src/routes/](src/routes/): `admin.js` (дашборд, настройки, API), `vacancies.js`, `applications.js`.
+- [src/routes/](src/routes/): `admin.js` (дашборд, профиль, настройки, API), `vacancies.js`, `applications.js`.
   Все формы обычные POST + redirect, JS на клиенте минимальный ([public/app.js](public/app.js)).
 - [src/format.js](src/format.js): русские подписи для enum-значений, доступны во вьюхах как `fmt`.
 
 ## Конфиг сборщика
 
 `collector.config.json` в `.gitignore`, это личные настройки. При первом запуске копируется из
-`collector.config.example.json`. Новый ключ добавлять в оба файла. Правится через `/settings` или руками.
+`collector.config.example.json`. Новый ключ добавлять в оба файла. Правится через `/profile` (опросник + JSON) или руками.
+`onboarded: false` в свежем конфиге: `/` редиректит на `/profile`, пока форма не сохранена.
 Читают его и приложение (зарплатный порог, курсы, налоговые доли), и сборщик (запросы, регионы).
-После смены курсов или порога старые вакансии пересчитываются кнопкой "Пересчитать зарплаты" на `/settings`.
+Сохранение профиля пересчитывает зарплаты всех вакансий по новым курсам и порогу.
+
+Кнопка "Собрать сейчас" на `/settings` ([src/collector.js](src/collector.js)) запускает `claude -p --chrome --output-format stream-json --verbose` из корня проекта
+по отмеченным площадкам профиля. Прогресс по событиям потока отдаёт `GET /api/collector-status`, его показывает плашка в шапке.
+По завершении отчёт, токены (сумма по `modelUsage`) и стоимость пишутся в таблицу `collector_runs`.
+Сервер слушает только `127.0.0.1`: кнопка запускает процесс на машине пользователя.
 
 Поменять поведение сборщика: править `docs/COLLECTOR.md` и конфиг, код приложения обычно не нужен.
 
