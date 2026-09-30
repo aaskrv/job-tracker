@@ -1,0 +1,56 @@
+{
+  "enabled": false,
+  "schedule": "daily",
+  "sources": [
+    "linkedin",
+    "indeed"
+  ],
+  "queries": [
+    "Senior Backend Engineer"
+  ],
+  "targets": {
+    "remote": true,
+    "relocation_countries": [
+      "EU"
+    ]
+  },
+  "max_vacancies_per_source": 30,
+  "max_age_days": 14,
+  "salary": {
+    "min_net_usd_month": 3000,
+    "fx_to_usd": {
+      "USD": 1,
+      "EUR": 1.08,
+      "GBP": 1.27,
+      "CHF": 1.12,
+      "PLN": 0.25,
+      "CZK": 0.043,
+      "SEK": 0.095,
+      "DKK": 0.145,
+      "AED": 0.2723,
+      "KZT": 0.0021
+    },
+    "net_ratio_by_country": {
+      "AE": 1,
+      "DE": 0.6,
+      "NL": 0.65,
+      "FR": 0.65,
+      "ES": 0.7,
+      "PT": 0.72,
+      "PL": 0.75,
+      "CZ": 0.75,
+      "CY": 0.8,
+      "EE": 0.78,
+      "LT": 0.7,
+      "IE": 0.65,
+      "SE": 0.62,
+      "DK": 0.6,
+      "BE": 0.58,
+      "AT": 0.6,
+      "IT": 0.63,
+      "_default": 0.7
+    },
+    "maybe_margin": 0.1
+  },
+  "ghosted_after_days": 21
+}

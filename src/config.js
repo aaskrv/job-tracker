@@ -17,6 +17,7 @@ export const env = {
 };
 
 for (const dir of [INBOX_DIR, IMPORTED_DIR, FAILED_DIR]) fs.mkdirSync(dir, { recursive: true });
+if (!fs.existsSync(COLLECTOR_CONFIG)) fs.copyFileSync(path.join(ROOT, 'collector.config.example.json'), COLLECTOR_CONFIG);
 
 // collector.config.json is shared between the app and the collector (Claude in Chrome):
 // the collector reads it before every run and does nothing while "enabled" is false.

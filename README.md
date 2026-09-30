@@ -17,6 +17,8 @@ npm run db:up        # Postgres 16 на localhost:5433
 npm start            # миграции применяются автоматически, админка на http://localhost:3000
 ```
 
+При первом запуске `collector.config.json` создаётся из `collector.config.example.json`. В нём твои запросы, страны и порог зарплаты, в git он не попадает.
+
 Для разработки: `npm run dev` (перезапуск при изменении файлов).
 
 Удалить всё и начать с чистой базы: `docker compose down -v && npm run db:up`.
