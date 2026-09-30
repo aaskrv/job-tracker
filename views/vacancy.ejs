@@ -1,0 +1,132 @@
+<%- include('partials/header') %>
+<% const triSel = (val, opt) => (String(val) === opt || (val == null && opt === '') ? 'selected' : ''); %>
+<p class="small"><a href="/vacancies">&larr; Все вакансии</a></p>
+
+<div class="page-head">
+  <div>
+    <h1><%= v.title %></h1>
+    <div class="muted"><%= v.company || '?' %> · <%= v.source %><% if (v.url) { %> · <a href="<%= v.url %>" target="_blank" rel="noopener">Открыть оригинал &nearr;</a><% } %></div>
+  </div>
+  <span class="score big <%= v.match_score >= 70 ? 'score-hi' : v.match_score >= 50 ? 'score-mid' : 'score-lo' %>"><%= v.match_score ?? '-' %></span>
+</div>
+
+<% if (msg) { %><div class="notice">
+  <%= { saved: 'Сохранено', applied: 'Отклик добавлен', event: 'Событие добавлено' }[msg] || msg %>
+</div><% } %>
+<% if (v.duplicate_of) { %><div class="notice notice-warn">Похоже на дубль вакансии <a href="/vacancies/<%= v.duplicate_of %>">#<%= v.duplicate_of %></a>.</div><% } %>
+
+<div class="layout-detail">
+  <div>
+    <section class="card facts">
+      <div><span class="muted">Локация</span><b><%= [v.location_city, v.location_country].filter(Boolean).join(', ') || '?' %></b></div>
+      <div><span class="muted">Формат</span><b><%= fmt.labels.remote[v.remote_type] %><%= v.remote_region ? ' (' + v.remote_region + ')' : '' %></b></div>
+      <div><span class="muted">Для кандидатов из KZ</span><b><%= fmt.labels.tri[v.open_to_kz] %></b></div>
+      <div><span class="muted">Релокация</span><b><%= fmt.bool(v.relocation) %></b></div>
+      <div><span class="muted">Виза</span><b><%= fmt.bool(v.visa_sponsorship) %></b></div>
+      <div><span class="muted">Зарплата</span><b><%= fmt.rawSalary(v) || 'не указана' %></b></div>
+      <div><span class="muted">Оценка net, USD/мес</span><b><% if (v.salary_fit !== 'unknown') { %><span class="fit fit-<%= v.salary_fit %>"><%= fmt.netUsd(v.salary_net_usd_min, v.salary_net_usd_max) %> (<%= fmt.labels.fit[v.salary_fit] %>)</span><% } else { %>-<% } %></b></div>
+      <div><span class="muted">Уровень / занятость</span><b><%= [v.seniority, v.employment_type].filter(Boolean).join(', ') || '?' %></b></div>
+      <div><span class="muted">Опубликована</span><b><%= fmt.date(v.posted_at) || '?' %></b></div>
+      <div><span class="muted">Впервые найдена</span><b><%= fmt.date(v.first_seen_at) %></b></div>
+      <div><span class="muted">Последний раз видели</span><b><%= fmt.date(v.last_seen_at) %></b></div>
+    </section>
+
+    <% if (v.stack && v.stack.length) { %>
+    <section class="card"><h2>Стек</h2><div class="tags"><% v.stack.forEach(t => { %><span class="tag"><%= t %></span><% }) %></div></section>
+    <% } %>
+
+    <% if (v.match_reason) { %>
+    <section class="card"><h2>Почему такой score</h2><p class="prewrap"><%= v.match_reason %></p></section>
+    <% } %>
+
+    <section class="card">
+      <h2>Описание</h2>
+      <% if (v.description) { %><div class="description prewrap"><%= v.description %></div><% } else { %><p class="muted">Описание не сохранено.</p><% } %>
+    </section>
+  </div>
+
+  <aside>
+    <section class="card">
+      <h2>Отклик</h2>
+      <% if (!app) { %>
+        <form method="post" action="/vacancies/<%= v.id %>/apply" class="stack-form">
+          <label>Дата отклика <input type="date" name="applied_at" value="<%= fmt.dateInput() %>"></label>
+          <label>Канал <input name="channel" list="channels" placeholder="Easy Apply, сайт компании, реферал..."></label>
+          <datalist id="channels"><option>LinkedIn Easy Apply</option><option>Indeed Apply</option><option>Сайт компании</option><option>Реферал</option><option>Email рекрутеру</option></datalist>
+          <label>Версия CV <input name="cv_version" placeholder="например cv_2026-09_kotlin.pdf"></label>
+          <label>Контакт <input name="contact" placeholder="Имя рекрутера, email"></label>
+          <label>Заметка <textarea name="notes" rows="2"></textarea></label>
+          <button class="btn">Я откликнулся</button>
+        </form>
+      <% } else { %>
+        <ol class="timeline">
+          <% events.forEach(e => { %>
+            <li class="ev-<%= e.type %>">
+              <div><b><%= e.label %></b> <span class="muted small"><%= fmt.date(e.happened_at) %></span>
+                <form method="post" action="/events/<%= e.id %>/delete" class="inline" data-confirm="Удалить событие?"><button class="link-btn" title="Удалить">&times;</button></form>
+              </div>
+              <% if (e.note) { %><div class="small prewrap"><%= e.note %></div><% } %>
+            </li>
+          <% }) %>
+        </ol>
+        <form method="post" action="/applications/<%= app.id %>/events" class="stack-form">
+          <label>Новое событие
+            <select name="type">
+              <% types.filter(t => t.code !== 'applied').forEach(t => { %><option value="<%= t.code %>"><%= t.label %></option><% }) %>
+            </select>
+          </label>
+          <label>Дата <input type="date" name="happened_at" value="<%= fmt.dateInput() %>"></label>
+          <label>Заметка <textarea name="note" rows="2" placeholder="кто, что спрашивали, следующий шаг"></textarea></label>
+          <button class="btn">Добавить событие</button>
+        </form>
+        <details class="mt">
+          <summary>Данные отклика</summary>
+          <form method="post" action="/applications/<%= app.id %>" class="stack-form">
+            <label>Дата отклика <input type="date" name="applied_at" value="<%= fmt.dateInput(app.applied_at) %>"></label>
+            <label>Канал <input name="channel" value="<%= app.channel || '' %>"></label>
+            <label>Версия CV <input name="cv_version" value="<%= app.cv_version || '' %>"></label>
+            <label>Контакт <input name="contact" value="<%= app.contact || '' %>"></label>
+            <label>Заметка <textarea name="notes" rows="2"><%= app.notes || '' %></textarea></label>
+            <button class="btn btn-ghost">Сохранить</button>
+          </form>
+          <form method="post" action="/applications/<%= app.id %>/delete" data-confirm="Удалить отклик со всей историей?">
+            <button class="link-btn danger">Удалить отклик</button>
+          </form>
+        </details>
+      <% } %>
+    </section>
+
+    <section class="card">
+      <h2>Моя оценка</h2>
+      <form method="post" action="/vacancies/<%= v.id %>" class="stack-form">
+        <label>Статус
+          <select name="status"><% Object.entries(fmt.labels.status).forEach(([k, l]) => { %><option value="<%= k %>" <%= v.status === k ? 'selected' : '' %>><%= l %></option><% }) %></select>
+        </label>
+        <label>Для кандидатов из KZ
+          <select name="open_to_kz"><% ['unknown','yes','no'].forEach(k => { %><option value="<%= k %>" <%= v.open_to_kz === k ? 'selected' : '' %>><%= fmt.labels.tri[k] %></option><% }) %></select>
+        </label>
+        <label>Релокация
+          <select name="relocation"><option value="" <%= triSel(v.relocation, '') %>>?</option><option value="true" <%= triSel(v.relocation, 'true') %>>да</option><option value="false" <%= triSel(v.relocation, 'false') %>>нет</option></select>
+        </label>
+        <label>Визовая поддержка
+          <select name="visa_sponsorship"><option value="" <%= triSel(v.visa_sponsorship, '') %>>?</option><option value="true" <%= triSel(v.visa_sponsorship, 'true') %>>да</option><option value="false" <%= triSel(v.visa_sponsorship, 'false') %>>нет</option></select>
+        </label>
+        <label>Score <input type="number" name="match_score" min="0" max="100" value="<%= v.match_score ?? '' %>"></label>
+        <label>Заметки <textarea name="notes" rows="3"><%= v.notes || '' %></textarea></label>
+        <button class="btn btn-ghost">Сохранить</button>
+      </form>
+    </section>
+
+    <% if (dups.length) { %>
+    <section class="card">
+      <h2>Та же вакансия на других площадках</h2>
+      <ul class="plain"><% dups.forEach(d => { %><li><a href="/vacancies/<%= d.id %>">#<%= d.id %> <%= d.source %></a></li><% }) %></ul>
+    </section>
+    <% } %>
+
+    <form method="post" action="/vacancies/<%= v.id %>/delete" data-confirm="Удалить вакансию из базы?">
+      <button class="link-btn danger">Удалить вакансию</button>
+    </form>
+  </aside>
+</div>
+<%- include('partials/footer') %>

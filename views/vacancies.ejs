@@ -1,0 +1,83 @@
+<%- include('partials/header') %>
+<div class="page-head">
+  <h1>Вакансии <span class="muted">(<%= total %>)</span></h1>
+</div>
+
+<form class="filters" method="get" action="/vacancies" data-autosubmit>
+  <input type="search" name="q" value="<%= f.q %>" placeholder="Поиск: название, компания, стек">
+  <select name="source"><option value="">Все источники</option>
+    <% sources.forEach(s => { %><option <%= f.source === s ? 'selected' : '' %>><%= s %></option><% }) %></select>
+  <select name="remote"><option value="">Любой формат</option>
+    <% Object.entries(fmt.labels.remote).forEach(([k, l]) => { %><option value="<%= k %>" <%= f.remote === k ? 'selected' : '' %>><%= l %></option><% }) %></select>
+  <select name="country"><option value="">Все страны</option>
+    <% countries.forEach(c => { %><option <%= f.country === c ? 'selected' : '' %>><%= c %></option><% }) %></select>
+  <select name="fit"><option value="">Зарплата: любая</option>
+    <% Object.entries(fmt.labels.fit).forEach(([k, l]) => { %><option value="<%= k %>" <%= f.fit === k ? 'selected' : '' %>><%= l %></option><% }) %></select>
+  <select name="kz"><option value="">Кандидаты из KZ: ?</option>
+    <option value="yes" <%= f.kz === 'yes' ? 'selected' : '' %>>KZ: да</option>
+    <option value="no" <%= f.kz === 'no' ? 'selected' : '' %>>KZ: нет</option>
+    <option value="unknown" <%= f.kz === 'unknown' ? 'selected' : '' %>>KZ: неизвестно</option></select>
+  <select name="status"><option value="">Активные</option>
+    <% Object.entries(fmt.labels.status).forEach(([k, l]) => { %><option value="<%= k %>" <%= f.status === k ? 'selected' : '' %>><%= l %></option><% }) %></select>
+  <select name="applied"><option value="">Отклик: все</option>
+    <option value="no" <%= f.applied === 'no' ? 'selected' : '' %>>Без отклика</option>
+    <option value="yes" <%= f.applied === 'yes' ? 'selected' : '' %>>С откликом</option></select>
+  <input type="number" name="min_score" min="0" max="100" value="<%= f.min_score %>" placeholder="Score от" class="narrow">
+  <select name="sort">
+    <% [['score','По совпадению'],['new','Сначала новые'],['posted','По дате публикации'],['salary','По зарплате'],['company','По компании']].forEach(([k, l]) => { %>
+      <option value="<%= k %>" <%= f.sort === k ? 'selected' : '' %>><%= l %></option><% }) %></select>
+  <label class="check"><input type="checkbox" name="dups" value="show" <%= f.dups === 'show' ? 'checked' : '' %>> дубли</label>
+  <a href="/vacancies" class="btn btn-ghost">Сбросить</a>
+</form>
+
+<% if (!rows.length) { %>
+  <p class="muted">Ничего не найдено. Вакансии появятся после <a href="/import">импорта</a>.</p>
+<% } else { %>
+<div class="table-wrap">
+<table class="table vacancies">
+  <thead><tr>
+    <th class="num">Score</th><th>Вакансия</th><th>Где</th><th>Формат</th>
+    <th title="Открыто для кандидатов из Казахстана / релокация / визовая поддержка">KZ · Рел. · Виза</th>
+    <th>Net, USD/мес</th><th>Статус</th><th>Найдена</th>
+  </tr></thead>
+  <tbody>
+  <% rows.forEach(v => { %>
+    <tr class="<%= v.duplicate_of ? 'is-dup' : '' %>">
+      <td class="num"><span class="score <%= v.match_score >= 70 ? 'score-hi' : v.match_score >= 50 ? 'score-mid' : 'score-lo' %>"><%= v.match_score ?? '-' %></span></td>
+      <td>
+        <a href="/vacancies/<%= v.id %>" class="v-title"><%= v.title %></a>
+        <div class="muted small"><%= v.company || '?' %> · <%= v.source %><%= v.duplicate_of ? ' · дубль #' + v.duplicate_of : '' %></div>
+        <% if (v.stack && v.stack.length) { %><div class="tags"><% v.stack.slice(0, 6).forEach(t => { %><span class="tag"><%= t %></span><% }) %></div><% } %>
+      </td>
+      <td><%= [v.location_city, v.location_country].filter(Boolean).join(', ') || '?' %><% if (v.remote_region) { %><div class="muted small"><%= v.remote_region %></div><% } %></td>
+      <td><%= fmt.labels.remote[v.remote_type] %></td>
+      <td class="flags">
+        <span class="flag flag-<%= v.open_to_kz %>"><%= fmt.labels.tri[v.open_to_kz] %></span>
+        <span class="flag flag-<%= v.relocation === true ? 'yes' : v.relocation === false ? 'no' : 'unknown' %>"><%= fmt.bool(v.relocation) %></span>
+        <span class="flag flag-<%= v.visa_sponsorship === true ? 'yes' : v.visa_sponsorship === false ? 'no' : 'unknown' %>"><%= fmt.bool(v.visa_sponsorship) %></span>
+      </td>
+      <td>
+        <% if (v.salary_fit !== 'unknown') { %><span class="fit fit-<%= v.salary_fit %>"><%= fmt.netUsd(v.salary_net_usd_min, v.salary_net_usd_max) %></span>
+        <% } else if (v.salary_min != null || v.salary_max != null) { %><span class="muted small"><%= fmt.rawSalary(v) %></span>
+        <% } else { %><span class="muted">не указана</span><% } %>
+      </td>
+      <td>
+        <% if (v.application_id) { %><span class="stage <%= v.is_closed ? 'stage-closed' : '' %>"><%= v.stage_label %></span>
+        <% } else { %><span class="status status-<%= v.status %>"><%= fmt.labels.status[v.status] %></span><% } %>
+      </td>
+      <td class="small"><%= fmt.daysAgo(v.first_seen_at) %></td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table>
+</div>
+
+<% if (pages > 1) { const qs = (p) => new URLSearchParams({ ...f, page: p }).toString(); %>
+<nav class="pager">
+  <% if (page > 1) { %><a href="/vacancies?<%= qs(page - 1) %>">&larr; Назад</a><% } %>
+  <span class="muted">стр. <%= page %> из <%= pages %></span>
+  <% if (page < pages) { %><a href="/vacancies?<%= qs(page + 1) %>">Вперёд &rarr;</a><% } %>
+</nav>
+<% } %>
+<% } %>
+<%- include('partials/footer') %>

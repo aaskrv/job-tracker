@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> · Job Tracker</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/">Job Tracker</a>
+  <nav>
+    <a href="/" class="<%= path === '/' ? 'active' : '' %>">Дашборд</a>
+    <a href="/vacancies" class="<%= path.startsWith('/vacancies') ? 'active' : '' %>">Вакансии</a>
+    <a href="/applications" class="<%= path.startsWith('/applications') ? 'active' : '' %>">Отклики</a>
+    <a href="/import" class="<%= path.startsWith('/import') ? 'active' : '' %>">Импорт</a>
+    <a href="/settings" class="<%= path.startsWith('/settings') ? 'active' : '' %>">Настройки</a>
+  </nav>
+</header>
+<main>

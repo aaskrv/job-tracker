@@ -1,0 +1,10 @@
+<% if (!rows.length) { %><p class="muted">Откликов пока нет.</p><% } else { %>
+<table class="table">
+  <thead><tr><th><%= keyLabel %></th><th class="num">Откл.</th><th class="num">Ответ</th><th class="num">Тех.</th><th class="num">Оффер</th><th class="num">Ответ %</th></tr></thead>
+  <tbody>
+  <% rows.forEach(r => { %>
+    <tr><td><%= r.key %></td><td class="num"><%= r.applied %></td><td class="num"><%= r.responded %></td><td class="num"><%= r.tech %></td><td class="num"><%= r.offer %></td><td class="num"><%= pct(r.responded, r.applied) %></td></tr>
+  <% }) %>
+  </tbody>
+</table>
+<% } %>

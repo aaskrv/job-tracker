@@ -1,0 +1,26 @@
+<%- include('partials/header') %>
+<div class="page-head"><h1>Настройки сбора</h1></div>
+<% if (msg) { %><div class="notice"><%= msg %></div><% } %>
+<% if (error) { %><div class="notice notice-warn">Не сохранено: <%= error %></div><% } %>
+
+<section class="card">
+  <h2>Регулярный сбор</h2>
+  <p>Сейчас: <span class="pill <%= cfg.enabled ? 'pill-ok' : 'pill-off' %>"><%= cfg.enabled ? 'включён' : 'выключен' %></span></p>
+  <p class="muted small">Флаг хранится в <code>collector.config.json</code>. Сборщик (Claude через Chrome) читает этот файл перед каждым плановым запуском и ничего не делает, пока флаг выключен. Ручной запуск ("собери вакансии") работает всегда.</p>
+  <form method="post" action="/settings/toggle">
+    <input type="hidden" name="enabled" value="<%= cfg.enabled ? 'false' : 'true' %>">
+    <button class="btn <%= cfg.enabled ? 'btn-ghost' : '' %>"><%= cfg.enabled ? 'Выключить' : 'Включить' %></button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Параметры</h2>
+  <p class="muted small">Запросы, целевые регионы, порог зарплаты (<b>$<%= cfg.salary.min_net_usd_month %></b> net/мес), курсы валют и доля net от gross по странам. Курсы и налоги примерные, их стоит время от времени обновлять.</p>
+  <form method="post" action="/settings" class="stack-form">
+    <textarea name="json" rows="28" class="code" spellcheck="false"><%= json %></textarea>
+    <button class="btn">Сохранить</button>
+  </form>
+  <p class="muted small">Изменения порога и курсов применяются к новым импортам. Чтобы пересчитать уже сохранённые вакансии, нажми кнопку ниже.</p>
+  <form method="post" action="/settings/recalc"><button class="btn btn-ghost">Пересчитать зарплаты</button></form>
+</section>
+<%- include('partials/footer') %>

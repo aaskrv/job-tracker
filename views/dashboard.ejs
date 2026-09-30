@@ -1,0 +1,90 @@
+<%- include('partials/header') %>
+<div class="page-head">
+  <h1>Дашборд</h1>
+  <span class="pill <%= collector.enabled ? 'pill-ok' : 'pill-off' %>">
+    Регулярный сбор: <%= collector.enabled ? 'включён' : 'выключен' %>
+  </span>
+</div>
+
+<section class="tiles">
+  <div class="tile"><div class="tile-label">Вакансий в базе</div><div class="tile-value"><%= s.totals.total %></div></div>
+  <div class="tile"><div class="tile-label">Новых за 7 дней</div><div class="tile-value"><%= s.totals.new_7d %></div></div>
+  <div class="tile"><div class="tile-label">Сильное совпадение (70+)</div><div class="tile-value"><%= s.totals.strong_match %></div></div>
+  <div class="tile"><div class="tile-label">Откликов</div><div class="tile-value"><%= s.funnel.applied %></div></div>
+  <div class="tile"><div class="tile-label">Ср. дней до ответа</div><div class="tile-value"><%= s.funnel.avg_days_to_response ?? '-' %></div></div>
+  <div class="tile"><div class="tile-label">Без ответа > <%= s.ghostDays %> дн.</div><div class="tile-value"><%= s.funnel.ghosted %></div></div>
+</section>
+
+<section class="card">
+  <h2>Воронка</h2>
+  <% const steps = [
+       ['Отклик', s.funnel.applied], ['Ответ', s.funnel.responded], ['Скрининг+', s.funnel.screening],
+       ['Тех. собес', s.funnel.tech], ['Оффер', s.funnel.offer]];
+     const top = Math.max(1, s.funnel.applied); %>
+  <div class="funnel">
+    <% steps.forEach(([label, value], i) => { %>
+      <div class="funnel-row">
+        <span class="funnel-label"><%= label %></span>
+        <span class="funnel-track"><span class="funnel-bar" style="width: <%= Math.max(value ? 2 : 0, 100 * value / top) %>%"></span></span>
+        <span class="funnel-value"><%= value %></span>
+        <span class="funnel-conv muted"><%= i === 0 ? '' : pct(value, steps[i - 1][1]) + ' от пред.' %></span>
+      </div>
+    <% }) %>
+  </div>
+  <p class="muted small">Отказов: <%= s.funnel.rejected %>. "Ответ" это любое событие после отклика, включая отказ.</p>
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>По источникам</h2>
+    <%- include('partials/funnel-table', { rows: s.funnelBySource, keyLabel: 'Источник', pct }) %>
+  </section>
+  <section class="card">
+    <h2>По версии CV</h2>
+    <%- include('partials/funnel-table', { rows: s.funnelByCv, keyLabel: 'CV', pct }) %>
+  </section>
+</div>
+
+<section class="card">
+  <h2>По месяцам</h2>
+  <% if (!s.byMonth.length) { %><p class="muted">Откликов пока нет.</p><% } else { %>
+  <table class="table">
+    <thead><tr><th>Месяц</th><th class="num">Откликов</th><th class="num">Ответов</th><th class="num">Тех. собесов</th><th class="num">Офферов</th></tr></thead>
+    <tbody>
+    <% s.byMonth.forEach(r => { %>
+      <tr><td><%= r.key %></td><td class="num"><%= r.applied %></td><td class="num"><%= r.responded %></td><td class="num"><%= r.tech %></td><td class="num"><%= r.offer %></td></tr>
+    <% }) %>
+    </tbody>
+  </table>
+  <% } %>
+</section>
+
+<div class="grid-3">
+  <% [['Вакансии по источникам', s.bySource, null], ['Зарплата vs порог', s.byFit, fmt.labels.fit], ['Формат работы', s.byRemote, fmt.labels.remote]].forEach(([h, rows, lab]) => { %>
+  <section class="card">
+    <h2><%= h %></h2>
+    <%- include('partials/bars', { rows, lab }) %>
+  </section>
+  <% }) %>
+</div>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Топ стран</h2>
+    <%- include('partials/bars', { rows: s.byCountry, lab: null }) %>
+  </section>
+  <section class="card">
+    <h2>Последние сборы</h2>
+    <% if (!s.runs.length) { %><p class="muted">Сборов ещё не было. <a href="/import">Импортировать файл</a></p><% } else { %>
+    <table class="table">
+      <thead><tr><th>Когда</th><th>Источник</th><th class="num">Найдено</th><th class="num">Новых</th><th class="num">Дублей</th></tr></thead>
+      <tbody>
+      <% s.runs.forEach(r => { %>
+        <tr><td><%= fmt.date(r.imported_at) %></td><td><%= r.source %></td><td class="num"><%= r.found %></td><td class="num"><%= r.inserted %></td><td class="num"><%= r.duplicates %></td></tr>
+      <% }) %>
+      </tbody>
+    </table>
+    <% } %>
+  </section>
+</div>
+<%- include('partials/footer') %>

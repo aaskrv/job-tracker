@@ -1,0 +1,11 @@
+<% if (!rows.length) { %><p class="muted">Нет данных.</p><% } else { const max = Math.max(...rows.map(r => r.n)); %>
+<div class="bars">
+  <% rows.forEach(r => { %>
+    <div class="bar-row">
+      <span class="bar-label"><%= lab ? (lab[r.key] || r.key) : r.key %></span>
+      <span class="bar-track"><span class="bar" style="width: <%= 100 * r.n / max %>%"></span></span>
+      <span class="bar-value"><%= r.n %></span>
+    </div>
+  <% }) %>
+</div>
+<% } %>

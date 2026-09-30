@@ -1,0 +1,46 @@
+<%- include('partials/header') %>
+<div class="page-head"><h1>Отклики <span class="muted">(<%= rows.length %>)</span></h1></div>
+
+<nav class="tabs">
+  <% [['open','В процессе'],['ghosted','Без ответа > ' + ghostDays + ' дн.'],['closed','Закрытые'],['all','Все']].forEach(([k, l]) => { %>
+    <a href="/applications?view=<%= k %>" class="<%= view === k ? 'active' : '' %>"><%= l %></a>
+  <% }) %>
+</nav>
+
+<% if (!rows.length) { %>
+  <p class="muted">Здесь пусто. Отклик добавляется на странице вакансии кнопкой "Я откликнулся".</p>
+<% } else { %>
+<div class="table-wrap">
+<table class="table">
+  <thead><tr><th>Вакансия</th><th>Откликнулся</th><th>Текущий этап</th><th class="num">Тишина, дн.</th><th>CV</th><th>Быстрое событие</th></tr></thead>
+  <tbody>
+  <% rows.forEach(r => { %>
+    <tr class="<%= !r.is_closed && r.days_idle > ghostDays ? 'is-ghost' : '' %>">
+      <td><a href="/vacancies/<%= r.vacancy_id %>" class="v-title"><%= r.title %></a>
+        <div class="muted small"><%= r.company || '?' %> · <%= r.source %> · <%= r.location_country || '?' %></div></td>
+      <td><%= fmt.date(r.applied_at) %><div class="muted small"><%= r.channel || '' %></div></td>
+      <td><span class="stage <%= r.is_closed ? 'stage-closed' : '' %>"><%= r.stage_label %></span>
+        <div class="muted small"><%= fmt.date(r.last_event_at) %></div></td>
+      <td class="num"><%= r.is_closed ? '' : r.days_idle %></td>
+      <td class="small"><%= r.cv_version || '' %></td>
+      <td>
+        <% if (!r.is_closed) { %>
+        <form method="post" action="/applications/<%= r.id %>/events" class="inline quick-event">
+          <input type="hidden" name="back" value="applications">
+          <select name="type">
+            <option value="hr_response">Ответ HR</option><option value="screening">Скрининг</option>
+            <option value="test_task">Тестовое</option><option value="tech_interview">Тех. собес</option>
+            <option value="final_interview">Финал</option><option value="offer">Оффер</option>
+            <option value="rejected">Отказ</option><option value="withdrawn">Отозвал</option>
+          </select>
+          <button class="btn btn-sm">+</button>
+        </form>
+        <% } %>
+      </td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table>
+</div>
+<% } %>
+<%- include('partials/footer') %>
