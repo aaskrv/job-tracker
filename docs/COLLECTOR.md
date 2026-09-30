@@ -15,6 +15,9 @@
 - Площадки: `sources` (linkedin, indeed).
 - Запросы: `queries`, по каждому отдельный поиск.
 - Регионы: удалёнка (`targets.remote`) и страны релокации (`targets.relocation_countries`: EU, AE).
+- Казахстан (`targets.kazakhstan`): казахстанские компании с удалёнкой, на которой можно работать из `remote_from`,
+  и гибридом в любом городе Казахстана, если `hybrid` равно `true`. Офис без удалёнки пропускать.
+  У таких вакансий `location_country: "KZ"`, `open_to_kz: "yes"`. Зарплата "на руки" означает `type: "net"`.
 - Только вакансии не старше `max_age_days`, не больше `max_vacancies_per_source` с площадки за запуск.
 - Темп как у человека: открывать карточки по одной, без массовых параллельных запросов.
 
@@ -34,6 +37,7 @@
 
 - Бейдж "Remote" на карточке ненадёжен: у части вакансий в тексте написано hybrid или onsite. `remote_type` ставить по тексту.
 - Для ЕС работает `geoId=91000000` (European Union) + `f_WT=2` (remote). Для ОАЭ использовать `location=United%20Arab%20Emirates`, geoId там подставляет EMEA.
+- Для Казахстана: `location=Kazakhstan` + `f_WT=2,3` (remote и hybrid).
 - Вакансии с пометкой Emiratisation только для граждан ОАЭ, их пропускать.
 
 ## Оценка соответствия (match_score 0-100)

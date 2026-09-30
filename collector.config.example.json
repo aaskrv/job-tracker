@@ -12,7 +12,11 @@
     "remote": true,
     "relocation_countries": [
       "EU"
-    ]
+    ],
+    "kazakhstan": {
+      "remote_from": "Almaty",
+      "hybrid": true
+    }
   },
   "max_vacancies_per_source": 30,
   "max_age_days": 14,
